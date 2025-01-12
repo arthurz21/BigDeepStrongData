@@ -39,12 +39,37 @@ class Customer:
         num_days = self.final_date - self.first_date
         num_weeks = num_days.days//7
         num_months = num_days.days//30
+            
         for i,type in enumerate(['abm', 'card', 'cheque', 'eft', 'emt', 'wire']):
             if type in self.transactions.keys():
-                self.transaction_count[i,0] = len(self.transactions[type])         
-                self.transactions_frequency[i,0] = self.transaction_count[i,0] / num_days.days
-                self.transactions_frequency[i,1] = self.transaction_count[i,0] / num_weeks
-                self.transactions_frequency[i,2] = self.transaction_count[i,0] / num_months
+                transaction_count = len(self.transactions[type])
+                if len(self.transactions[type]) == 0:
+                    self.transaction_count[i,0] = transaction_count
+                    self.transactions_frequency[i,0] = transaction_count
+                    self.transactions_frequency[i,1] = transaction_count
+                    self.transactions_frequency[i,2] = transaction_count
+                else:
+                    if num_days.days == 0:
+                        self.transactions_frequency[i,0] = transaction_count
+                    else:
+                        self.transactions_frequency[i,0] = transaction_count / num_days.days
+                    
+                    if num_weeks == 0:
+                        self.transactions_frequency[i,1] = transaction_count
+                    else:
+                        self.transactions_frequency[i,1] = transaction_count / num_weeks
+
+                    if num_months == 0:
+                        self.transactions_frequency[i,2] = transaction_count
+                    else:
+                        self.transactions_frequency[i,2] = transaction_count / num_months
+                        
+                      
+                    # self.transaction_count[i,0] = len(self.transactions[type])         
+                    # self.transactions_frequency[i,0] = self.transaction_count[i,0] / num_days.days
+                    # self.transactions_frequency[i,1] = self.transaction_count[i,0] / num_weeks
+                    # self.transactions_frequency[i,2] = self.transaction_count[i,0] / num_months
+            
 
     def transaction_amounts(self):
         '''
@@ -56,22 +81,24 @@ class Customer:
             total_credited = []
             total_debited = []
             for transaction in self.transactions[type]:
-                if transaction[3] == ['credit', 'C']:
+                if transaction[3] in ['credit', 'C']:
                     total_credited.append(transaction[2])
                 if transaction[3] in ['debit', 'D']:
                     total_debited.append(transaction[2])
             if len(total_credited) != 0:
                 self.avg_transaction_amount[i,1] = sum(total_credited)/len(total_credited)
+                self.transaction_amount_variance[i,1] = np.var(total_credited)
             else:
                 self.avg_transaction_amount[i,1] = 0
-
+                self.transaction_amount_variance[i,1] = 0
+            
             if len(total_debited) != 0:
                 self.avg_transaction_amount[i,0] = sum(total_debited)/len(total_debited)
+                self.transaction_amount_variance[i,0] = np.var(total_debited)
             else:
                 self.avg_transaction_amount[i,0] = 0
+                self.transaction_amount_variance[i,0] = 0
             
-            self.transaction_amount_variance[i,0] = np.var(total_debited)
-            self.transaction_amount_variance[i,1] = np.var(total_credited)
 
     def add_transaction(self,type,transaction):
         '''
@@ -144,7 +171,7 @@ def get_header():
 
 if __name__ == "__main__":
     customers = dict()
-    os.chdir("./Raw Data/")
+    # os.chdir("./Raw Data/")
     files = os.listdir()
     for file in files:
         if file not in ['abm.csv', 'card.csv', 'cheque.csv', 'eft.csv', 'emt.csv', 'wire.csv']:
@@ -172,4 +199,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(customer_data, columns=columns)
 
-    pd.DataFrame.to_csv(df,'Transaction Volume and Frequency.csv')
+    pd.DataFrame.to_csv(df,'Transaction Volume and Frequency_test.csv')
