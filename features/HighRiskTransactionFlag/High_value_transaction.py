@@ -6,6 +6,7 @@ from pathlib import Path
 
 class TransactionAnalyzer:
     def __init__(self, kyc_file_path):
+        self.unique_customer_ids = set()
         """Initialize the analyzer with the KYC data file"""
         try:
             self.kyc_data = pd.read_csv(kyc_file_path)
@@ -28,6 +29,12 @@ class TransactionAnalyzer:
         """Load and prepare transaction data"""
         try:
             df = pd.read_csv(file_path)
+            
+            # # Because all the credited transactions are negative in the card.csv file
+            # # but all the other type of transactions are positive for both credited and debited transactions.
+            if transaction_type == 'card':
+                df['amount_cad'] = df['amount_cad'].abs()
+            self.unique_customer_ids = self.unique_customer_ids.union(set(df['customer_id'].unique()))
             amount_col = self.get_amount_column(df)
             print(f"Using '{amount_col}' as amount column for {transaction_type}")
 
@@ -135,7 +142,7 @@ class TransactionAnalyzer:
 
                     # Save individual industry results
                     safe_industry = str(industry).replace(' ', '_').replace('/', '_').replace('\\', '_')
-                    output_file = f"{output_dir}/industry_{safe_industry}_{trans_type}_analysis.csv"
+                    output_file = f"{output_dir}/analysis_data/industry_{safe_industry}_{trans_type}_analysis.csv"
                     summary.to_csv(output_file, index=False)
 
                     processing_summary.append({
@@ -223,21 +230,61 @@ class TransactionAnalyzer:
 
 
 def main():
-    analyzer = TransactionAnalyzer(r"C:\Users\arthu\Downloads\ML_comp\section_6_data\kyc.csv")
+    
+    # analyzer = TransactionAnalyzer(r"C:\Users\arthu\Downloads\ML_comp\section_6_data\kyc.csv")
 
+    # transaction_files = {
+    #     'abm': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\abm.csv",
+    #     'emt': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\emt.csv",
+    #     'card': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\card.csv",
+    #     'wire': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\wire.csv",
+    #     'eft': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\eft.csv",
+    #     'cheque': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\cheque.csv",
+    # }
+    
+    data_dir = os.getcwd() + '/raw_data' # Path to the raw data directory
+    
+    analyzer = TransactionAnalyzer(data_dir + '/kyc.csv')
     transaction_files = {
-        'abm': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\abm.csv",
-        'emt': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\emt.csv",
-        'card': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\card.csv",
-        'wire': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\wire.csv",
-        'eft': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\eft.csv",
-        'cheque': r"C:\Users\arthu\Downloads\ML_comp\section_6_data\cheque.csv",
+        'abm': data_dir + '/abm.csv',
+        'emt': data_dir + '/emt.csv',
+        'card': data_dir + '/card.csv',
+        'wire': data_dir + '/wire.csv',
+        'eft': data_dir + '/eft.csv',
+        'cheque': data_dir + '/cheque.csv',
     }
     for trans_type, file_path in transaction_files.items():
         analyzer.load_transaction_file(trans_type, file_path)
+    output_dir = os.getcwd() + '/features/HighRiskTransactionFlag' # Path to the output directory
+    analyzer.process_transactions(output_dir)
 
-    analyzer.process_transactions(r"C:\Users\arthu\Downloads\ML_comp\section_6_data")
+    print(f'Number of unique customers: {len(analyzer.unique_customer_ids)}')
+    
+    summary_df = pd.read_csv(output_dir + '/customer_high_value_summary.csv')
+    customers_with_high_value = set(summary_df['customer_id'].tolist())
+    customers_not_in_summary = analyzer.unique_customer_ids.difference(customers_with_high_value)
+    
+    print(f'Number of customers not with high value transactions: {len(customers_not_in_summary)}')
+    
+    # Create a list to hold new rows
+    new_rows = []
 
+    # Add rows for customers not in the summary
+    for customer in customers_not_in_summary:
+        new_row = {'customer_id': customer}
+        for col in summary_df.columns:
+            if col != 'customer_id':
+                new_row[col] = 0
+        new_rows.append(new_row)
+
+    # Convert the list of new rows to a DataFrame
+    new_rows_df = pd.DataFrame(new_rows)
+
+    # Concatenate the new rows DataFrame with the original summary DataFrame
+    summary_df = pd.concat([summary_df, new_rows_df], ignore_index=True)
+
+    # Save the updated DataFrame
+    summary_df.to_csv(output_dir + '/customer_high_value_summary.csv', index=False)
 
 if __name__ == "__main__":
     main()

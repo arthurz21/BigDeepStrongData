@@ -24,6 +24,11 @@ def process_transaction_files(folder_path):
     """
     final_df = None
     csv_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
+    
+    if 'kyc.csv' in csv_files: 
+        csv_files.remove('kyc.csv')
+    if 'kyc_industry_codes.csv' in csv_files: 
+        csv_files.remove('kyc_industry_codes.csv')
 
     for file in csv_files:
         try:
@@ -34,6 +39,11 @@ def process_transaction_files(folder_path):
             # Read the CSV file
             file_path = os.path.join(folder_path, file)
             df = pd.read_csv(file_path)
+            
+            # Because all the credited transactions are negative in the card.csv file 
+            # But all the other type of transactions are positive for both credited and debited transactions. 
+            if file == 'card.csv':
+                df['amount_cad'] = df['amount_cad'].abs()
 
             # Standardize debit_credit column values
             df['debit_credit'] = df['debit_credit'].apply(standardize_credit_debit)
@@ -107,6 +117,10 @@ def save_results(df, folder_path, filename="transaction_credit_debit_summary.csv
     """
     if df is not None:
         # Save to CSV
+        
+        # Create output directory if it doesn't exist
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+        
         output_file = os.path.join(folder_path, filename)
         df.to_csv(output_file, index=False)
         print(f"\nResults saved to: {output_file}")
@@ -151,11 +165,26 @@ def calculate_credit_debit_ratio(folder_path):
         total_debit = df[debit_cols].sum(axis=1)
 
         # Calculate ratio, set to 1000000000 if debit is zero
-        result_df['credit_debit_ratio'] = np.where(
-            total_debit == 0,
-            1000000000,
-            total_credit / total_debit
+        # result_df['credit_debit_ratio'] = np.where(
+        #     total_debit == 0,
+        #     1000000000,
+        #     total_credit / total_debit
+        # )
+        # Instead of saving the ratio of debit to credit, save the ratio debit to total amount
+        # and credit to total amount. This will avoid dealing with case when credit is zero
+        
+        result_df['credit_total_amount_ratio'] = np.where(
+            total_debit + total_credit == 0,
+            0,
+            total_credit / (total_debit+total_credit)
         )
+        
+        result_df['debit_total_amount_ratio'] = np.where(
+            total_debit + total_credit == 0,
+            0,
+            total_debit / (total_debit+total_credit)
+        )
+        
         #result_df["total_credit"] = total_credit
         #result_df["total_debit"] = total_debit
 
@@ -172,11 +201,12 @@ def calculate_credit_debit_ratio(folder_path):
 
 
 if __name__ == "__main__":
-    # Set your folder path
-    folder_path = r"C:\Users\arthu\Downloads\ML_comp\processed_data"
+    # Set your folder path 
+    data_path = os.curdir + '/raw_data'
+    folder_path = os.curdir + '/features/Debit_Credit_Ratio'
 
     # Process files and create summary
-    result_df = process_transaction_files(folder_path)
+    result_df = process_transaction_files(data_path)
 
     # Save results
     save_results(result_df, folder_path)

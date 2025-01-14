@@ -168,9 +168,12 @@ def calculate_transaction_ratios(folder_path):
         result_df = pd.DataFrame()
         result_df['customer_id'] = df['customer_id']
 
-        # Calculate ratios
-        result_df['abm_count_ratio'] = df['abm_count'] / total_count
-        result_df['abm_amount_ratio'] = df['abm_amount_cad'] / total_amount
+        # Calculate ratios     
+        result_df['abm_count_ratio'] = df['abm_count'] / total_count.replace(0, np.nan)
+        result_df['abm_amount_ratio'] = df['abm_amount_cad'] / total_amount.replace(0, np.nan)
+
+        # Fill NaN values with 0
+        result_df = result_df.fillna(0)
 
         # Add original counts and amounts for reference
         #result_df['abm_count'] = df['abm_count']
@@ -238,8 +241,13 @@ def calculate_transaction_ratios(folder_path):
 
 if __name__ == "__main__":
     # Set your paths here
-    folder_path = r"C:\Users\arthu\Downloads\ML_comp\processed_data"
-    output_path = r"C:\Users\arthu\Downloads\ML_comp\section_2"
+    
+    # folder_path = r"C:\Users\arthu\Downloads\ML_comp\processed_data"
+    # output_path = r"C:\Users\arthu\Downloads\ML_comp\section_2"
+
+    folder_path = os.curdir + '/raw_data'
+    output_path = os.curdir + '/features/Cash_Indicator_Ratio'
+    
 
     # Process files and create summary
     result_df = process_transaction_files(folder_path)
@@ -248,7 +256,8 @@ if __name__ == "__main__":
     save_results(result_df, output_path)
 
     # Set your file paths
-    folder_path = r"C:\Users\arthu\Downloads\ML_comp\section_2"
+    # folder_path = r"C:\Users\arthu\Downloads\ML_comp\section_2"
+    folder_path = os.curdir + '/features/Cash_Indicator_Ratio'
 
     # Run the analysis
     calculate_transaction_ratios(folder_path)

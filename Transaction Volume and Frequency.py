@@ -25,7 +25,7 @@ class Customer:
         self.transactions_frequency = np.zeros((6,3))
         # Debit is column 0, Credit is column 2
         self.avg_transaction_amount = np.zeros((6,2))
-        self.transaction_amount_variance = np.zeros((6,2))
+        self.transaction_amount_std = np.zeros((6,2))
 
         self.first_date = datetime.datetime(9999, 1, 1)
         self.final_date = datetime.datetime(1, 1, 1)
@@ -87,17 +87,17 @@ class Customer:
                     total_debited.append(transaction[2])
             if len(total_credited) != 0:
                 self.avg_transaction_amount[i,1] = sum(total_credited)/len(total_credited)
-                self.transaction_amount_variance[i,1] = np.var(total_credited)
+                self.transaction_amount_std[i,1] = np.std(total_credited)
             else:
                 self.avg_transaction_amount[i,1] = 0
-                self.transaction_amount_variance[i,1] = 0
+                self.transaction_amount_std[i,1] = 0
             
             if len(total_debited) != 0:
                 self.avg_transaction_amount[i,0] = sum(total_debited)/len(total_debited)
-                self.transaction_amount_variance[i,0] = np.var(total_debited)
+                self.transaction_amount_std[i,0] = np.std(total_debited)
             else:
                 self.avg_transaction_amount[i,0] = 0
-                self.transaction_amount_variance[i,0] = 0
+                self.transaction_amount_std[i,0] = 0
             
 
     def add_transaction(self,type,transaction):
@@ -140,8 +140,8 @@ class Customer:
             avg_amount.append(self.avg_transaction_amount[i,0])
             avg_amount.append(self.avg_transaction_amount[i,1])
 
-            transaction_var.append(self.transaction_amount_variance[i,0])
-            transaction_var.append(self.transaction_amount_variance[i,1])
+            transaction_var.append(self.transaction_amount_std[i,0])
+            transaction_var.append(self.transaction_amount_std[i,1])
 
         feature_vector = [self.ID] + freq_data + avg_amount + transaction_var
         return feature_vector
@@ -150,7 +150,7 @@ class Customer:
 def get_header():
     freq = ['daily frequency', 'weekly frequency', 'monthly frequency']
     avg = ['debited transaction average', 'credited transaction average']
-    var = ['debited transaction variance', 'credited transaction variance']
+    var = ['debited transaction std', 'credited transaction std']
     #['abm', 'card', 'cheque', 'eft', 'emt', 'wire']
     freq_header = []
     avg_header = []
@@ -177,6 +177,11 @@ if __name__ == "__main__":
         if file not in ['abm.csv', 'card.csv', 'cheque.csv', 'eft.csv', 'emt.csv', 'wire.csv']:
             continue
         data = pd.read_csv(file)
+        
+        # Because all the credited transactions are negative in the card.csv file 
+        # But all the other type of transactions are positive for both credited and debited transactions. 
+        if file == 'card.csv': 
+            data['amount_cad'] = data['amount_cad'].abs() 
         transaction_type = file.split('.')[0]
         for _, transaction in data.iterrows():
             transaction = transaction.values
@@ -199,4 +204,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(customer_data, columns=columns)
 
-    pd.DataFrame.to_csv(df,'Transaction Volume and Frequency_test.csv')
+    pd.DataFrame.to_csv(df,'Transaction Volume and Frequency.csv')
