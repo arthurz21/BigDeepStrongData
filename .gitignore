@@ -2,3 +2,4 @@
 venv/
 env/
 features/HighRiskTransactionFlag/analysis_data/
+synth_datasets/
