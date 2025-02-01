@@ -3,3 +3,10 @@ venv/
 env/
 features/HighRiskTransactionFlag/analysis_data/
 synth_datasets/
+__pycache__/transaction_volume_and_frequency.cpython-312.pyc
+synth_training_data.csv
+processed_synth_dataset/ach_s.csv
+processed_synth_dataset/card_s.csv
+processed_synth_dataset/cheque_s.csv
+processed_synth_dataset/wire_s.csv
+cust_trx_dict.pkl

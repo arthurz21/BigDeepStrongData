@@ -105,7 +105,7 @@ class Customer:
         type should be the transaction process
         transaction is a list of detailed transaction information
         '''
-        if type not in ['abm', 'card', 'cheque', 'eft', 'emt', 'wire']: 
+        if type not in ['abm', 'card', 'cheque', 'eft', 'emt', 'wire', 'ach']: 
             print("*****TRANSACTION TYPE IS NOT FOUND******\n DATA WAS NOT ALLOCATED PLEASE TRY AGAIN")
             return 1
         
