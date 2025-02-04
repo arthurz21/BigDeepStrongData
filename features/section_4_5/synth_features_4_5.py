@@ -164,14 +164,14 @@ def process_single_df(item):
 if __name__ == "__main__":
     datapath = Path('processed_synth_dataset/')
     print(datapath.absolute())
-    frac = 0.0001
+    frac = 1
     wire = pd.read_csv(datapath/'wire_s.csv', engine="pyarrow").sample(frac = frac)
     ach = pd.read_csv(datapath/'ach_s.csv', engine="pyarrow").sample(frac = frac)
     cheque = pd.read_csv(datapath/'cheque_s.csv', engine="pyarrow").sample(frac = frac)
     card = pd.read_csv(datapath/'card_s.csv', engine="pyarrow").sample(frac = frac)
 
     dfs = {'card': card, 'wire': wire, 'ach': ach, 'cheque': cheque}
-    # dfs = {'ach': ach, 'cheque': cheque}
+    dfs = {'wire': wire, 'card': card}
     #Sorting the DFs by date and Time
     for key in dfs.keys():
         dfs[key]['transaction_datetime'] = pd.to_datetime(dfs[key]['transaction_date'].astype(str) + ' ' + dfs[key]['transaction_time'].astype(str))
@@ -179,12 +179,7 @@ if __name__ == "__main__":
         
     
     #Collecting all unique customer IDs
-    wire_customers = dfs['wire']['customer_id'].unique()
-    ach_customers = dfs['ach']['customer_id'].unique()
-    cheque_customers = dfs['cheque']['customer_id'].unique()
-    card_customers = dfs['card']['customer_id'].unique()
-
-    all_customers= list(set(np.concatenate((wire_customers, ach_customers, cheque_customers, card_customers), axis=0)))
+    all_customers= list(set(np.concatenate([dfs[trx_type]['customer_id'].unique() for trx_type in dfs.keys()], axis=0)))
     # all_customers= list(set(np.concatenate((cheque_customers, ach_customers))))
     print(len(all_customers))
     
