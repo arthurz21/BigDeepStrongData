@@ -10,3 +10,16 @@ processed_synth_dataset/card_s.csv
 processed_synth_dataset/cheque_s.csv
 processed_synth_dataset/wire_s.csv
 cust_trx_dict.pkl
+synth_features/.DS_Store
+synth_features/synth_city_entropy.csv
+synth_features/synth_credit_debit_ratio.csv
+synth_features/synth_currency_entropy.csv
+synth_features/synth_customer_city_summary.csv
+synth_features/synth_features_4_5_2.pkl
+synth_features/synth_features_4_5.csv
+synth_features/synth_features_4_5.pkl
+synth_features/synth_transaction_summary.csv
+synth_features/synth_transaction_volume_and_frequency.csv
+synthetic_cust_trx_dict.pkl
+synthetic_training_data.csv
+training_data.csv

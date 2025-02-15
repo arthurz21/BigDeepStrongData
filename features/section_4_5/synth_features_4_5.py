@@ -163,7 +163,10 @@ def process_single_df(item):
 
 if __name__ == "__main__":
     datapath = Path('processed_synth_dataset/')
+    feature_output_dir = Path.mkdir('synth_features', exist_ok=True)
+    
     print(datapath.absolute())
+    
     frac = 1
     wire = pd.read_csv(datapath/'wire_s.csv', engine="pyarrow").sample(frac = frac)
     ach = pd.read_csv(datapath/'ach_s.csv', engine="pyarrow").sample(frac = frac)
@@ -171,7 +174,6 @@ if __name__ == "__main__":
     card = pd.read_csv(datapath/'card_s.csv', engine="pyarrow").sample(frac = frac)
 
     dfs = {'card': card, 'wire': wire, 'ach': ach, 'cheque': cheque}
-    dfs = {'wire': wire, 'card': card}
     #Sorting the DFs by date and Time
     for key in dfs.keys():
         dfs[key]['transaction_datetime'] = pd.to_datetime(dfs[key]['transaction_date'].astype(str) + ' ' + dfs[key]['transaction_time'].astype(str))
@@ -180,11 +182,16 @@ if __name__ == "__main__":
     
     #Collecting all unique customer IDs
     all_customers= list(set(np.concatenate([dfs[trx_type]['customer_id'].unique() for trx_type in dfs.keys()], axis=0)))
-    # all_customers= list(set(np.concatenate((cheque_customers, ach_customers))))
     print(len(all_customers))
     
     with concurrent.futures.ProcessPoolExecutor() as executor:
     # dfs.items() produces (df_key, df) tuples.
         results = list((executor.map(process_single_df, dfs.items())))
     
-    pkl.dump(results, open(datapath/'synth_features_4_5.pkl', 'wb'))
+    final_df = pd.concat([value for key, value in results], axis = 1, join='outer')
+    # fill all the missing data cells
+    final_df.fillna(0, inplace=True)
+
+    # convert the index into a column feature and replace index with just numbers
+    final_df = final_df.reset_index().rename(columns={'index': 'customer_id'})
+    final_df.to_csv(feature_output_dir/'synth_features_4_5.csv', index = False)

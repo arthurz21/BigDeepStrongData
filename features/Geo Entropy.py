@@ -8,8 +8,8 @@ files = {
     "cheque": "cheque.csv",
     "eft": "eft.csv",
     "emt": "emt.csv",
-    "kyc": "kyc.csv",
-    "kyc_industry_codes": "kyc_industry_codes.csv",
+    # "kyc": "kyc.csv",
+    # "kyc_industry_codes": "kyc_industry_codes.csv",
     "wire": "wire.csv"
 }
 
@@ -17,7 +17,7 @@ files = {
 unique_customer_ids = set()
 
 for file in files.values():
-    df = pd.read_csv(file)
+    df = pd.read_csv('raw_data/' + file)
     if "customer_id" in df.columns:
         unique_customer_ids.update(df["customer_id"].dropna().unique())
 
@@ -25,8 +25,8 @@ for file in files.values():
 unique_customers_df = pd.DataFrame({"customer_id": list(unique_customer_ids)})
 
 # Step 2: Load and clean `card` and `abm` data
-card_df = pd.read_csv(files["card"])
-abm_df = pd.read_csv(files["abm"])
+card_df = pd.read_csv('raw_data/' + files["card"])
+abm_df = pd.read_csv('raw_data/' + files["abm"])
 
 # Keep relevant columns
 card_df = card_df[['customer_id', 'country', 'province', 'city']]
@@ -72,10 +72,10 @@ geographical_entropy = location_counts.groupby('customer_id').apply(calculate_en
 geographical_entropy = unique_customers_df.merge(
     geographical_entropy, on='customer_id', how='left'
 )
-geographical_entropy['geographical_entropy'] = geographical_entropy['geographical_entropy'].fillna('N/A')
+geographical_entropy['geographical_entropy'] = geographical_entropy['geographical_entropy'].fillna(0)
 
 # Step 9: Save to CSV
-output_file = "geographical_entropy.csv"
+output_file = "features/geographical_entropy.csv"
 geographical_entropy.to_csv(output_file, index=False)
 
 # Step 10: Print summary

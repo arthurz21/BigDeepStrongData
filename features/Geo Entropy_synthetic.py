@@ -71,11 +71,11 @@ def main(files, output_folder):
     currency_entropy = unique_customers_df.merge(
         currency_entropy, on='customer_id', how='left'
     )
-    city_entropy['city_entropy'] = city_entropy['city_entropy'].fillna('N/A')
-    currency_entropy['currency_entropy'] = currency_entropy['currency_entropy'].fillna('N/A')
+    city_entropy['city_entropy'] = city_entropy['city_entropy'].fillna(0)
+    currency_entropy['currency_entropy'] = currency_entropy['currency_entropy'].fillna(0)
 
     # Step 9: Save to CSV
-    city_output_file = output_folder + "city_entropy_entropy.csv"
+    city_output_file = output_folder + "city_entropy.csv"
     city_entropy.to_csv(city_output_file, index=False)
     
     currency_output_file = output_folder + "currency_entropy.csv"
@@ -93,9 +93,10 @@ def main(files, output_folder):
 
 if __name__ == "__main__":
     synthetic_data_dir = 'processed_synth_dataset/'
-    files = os.listdir(synthetic_data_dir)
+    synth_feature_output_dir = 'synth_features/'
+    
+    files = ['wire_s.csv', 'ach_s.csv', 'cheque_s.csv', 'card_s.csv']
     file_dict = {}
     for file in files:
         file_dict[file.split('_')[0]] = synthetic_data_dir + file
-
-    main(file_dict, synthetic_data_dir)
+    main(file_dict, synth_feature_output_dir)
